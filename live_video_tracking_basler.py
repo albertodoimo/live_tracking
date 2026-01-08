@@ -25,8 +25,6 @@ import cv2
 import numpy as np
 import yaml
 import datetime
-import queue
-import time
 from utilities_tracking import *
 
 ###############################################################################
