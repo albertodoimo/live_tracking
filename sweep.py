@@ -40,28 +40,39 @@ if __name__ == "__main__":
 
     fs = 48000
     dur = 10e-3
-    hi_freq = 100
-    low_freq = 4e3
+    hi_freq = 4e3
+    low_freq = 100
     n_sweeps = 500
 
     t_tone = np.linspace(0, dur, int(fs * dur))
     chirp = signal.chirp(t_tone, hi_freq, t_tone[-1], low_freq)
     sig = pow_two_pad_and_window(chirp, show=True)
 
-    silence_dur = 10  # [ms]
+    silence_dur = 500  # [ms]
     silence_samples = int(silence_dur * fs / 1000)
     silence_vec = np.zeros((silence_samples,))
     full_sig = pow_two(np.concatenate((sig, silence_vec)))
-    
+
     # stereo_sig = np.hstack([full_sig.reshape(-1, 1), full_sig.reshape(-1, 1)])
     # output_sig = np.float32(stereo_sig)
 
-    # 6 channel version 
-    multich_signal =  np.float32(np.hstack([full_sig.reshape(-1, 1), full_sig.reshape(-1, 1), full_sig.reshape(-1, 1), full_sig.reshape(-1, 1), full_sig.reshape(-1, 1), full_sig.reshape(-1, 1)]))
+    # 6 channel version
+    multich_signal = np.float32(
+        np.hstack(
+            [
+                full_sig.reshape(-1, 1),
+                full_sig.reshape(-1, 1),
+                full_sig.reshape(-1, 1),
+                full_sig.reshape(-1, 1),
+                full_sig.reshape(-1, 1),
+                full_sig.reshape(-1, 1),
+            ]
+        )
+    )
     print("multich", multich_signal.shape)
-    output_sig = np.float32(multich_signal)
+    output_sig = np.float32(np.tile(multich_signal, (500, 1)))
 
-    sf.write("multich-500_chirp_11-4000_48khz.wav", 0.8*output_sig, samplerate=fs)
+    sf.write("multich-500_chirp_11-4000_48khz.wav", 0.8 * output_sig, samplerate=fs)
 
     current_frame = 0
 

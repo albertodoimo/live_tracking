@@ -32,11 +32,11 @@ print("Available audio devices:")
 print(sd.query_devices())
 
 # Select your device by index (change this number based on the list above)
-device_index = 20
-print('\ndevice_samplerate:', sd.query_devices(device_index)['default_samplerate'])
+device_index = 1
+print("\ndevice_samplerate:", sd.query_devices(device_index)["default_samplerate"])
 
 # Load the stereo wav file for channels 1-2
-tracking_signal, fs1 = sf.read('15_Hz_tracking_sync_signal_48000.wav')
+tracking_signal, fs1 = sf.read("15_Hz_tracking_sync_signal_48000.wav")
 print(fs1)
 
 # ---- PLAYBACK WITH CTRL-C INTERRUPT ----
@@ -45,8 +45,11 @@ for i in range(3, 0, -1):
     print(f"Starting in {i} seconds... \n")
     time.sleep(1)
 sd.play(tracking_signal, samplerate=fs1, device=device_index)
+# Load and play multichannel file on channels 2 and 7
+multich_signal, fs2 = sf.read("multich-500_chirp_11-4000_48khz.wav")
+sd.play(multich_signal, samplerate=fs2, device=device_index, mapping=[2, 7])
 print("Playback running... Press CTRL+C to stop.")
-for i in range(1, 30*60):
+for i in range(1, 30 * 60):
     time.sleep(1)
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     minutes = ((i * 1) % 3600) // 60

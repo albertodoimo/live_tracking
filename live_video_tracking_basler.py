@@ -63,8 +63,8 @@ crop_w = 2560
 crop_h = 1600
 
 # Define marker pairs and robot names
-marker_pairs = [(4, 5), (6, 7), (10, 11)]
-robot_names = {(4, 5): "241", (6, 7): "240", (10, 11): "238"}
+marker_pairs = [(8, 9), (6, 7), (10, 11)]
+robot_names = {(8, 9): "241", (6, 7): "240", (10, 11): "238"}
 
 # Arena dimensions in meters from the marks on the carpet
 print("------------------- Check arena dimensions! ---------------------")
@@ -321,7 +321,7 @@ if __name__ == "__main__":
                 )
 
                 cv2.namedWindow("Basler Camera tracking", cv2.WINDOW_NORMAL)
-                cv2.resizeWindow("Basler Camera tracking", 1600, 1200)
+                # cv2.resizeWindow("Basler Camera tracking", 1600, 1200)
 
                 # Show the camera window
                 cv2.imshow("Basler Camera tracking", frame)
