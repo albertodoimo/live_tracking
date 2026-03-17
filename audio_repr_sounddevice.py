@@ -33,11 +33,11 @@ print("Available audio devices:")
 print(sd.query_devices())
 
 # Select your device by index (change this number based on the list above)
-device_index = 7
+device_index = 20
 print("\ndevice_samplerate:", sd.query_devices(device_index)["default_samplerate"])
 
 # Load the stereo wav file for channels 1-2
-tracking_signal, fs1 = sf.read("15Hz_tracking_sync_signal_48.wav")
+tracking_signal, fs1 = sf.read("15_Hz_tracking_sync_signal_48000.wav")
 
 multich_signal, fs2 = sf.read("multich-1000_chirp_100-4000hz_48khz.wav")
 
@@ -86,7 +86,7 @@ print(f"\nPlaying audio on device:\n {sd.query_devices(device_index)['name']}\n"
 for i in range(3, 0, -1):
     print(f"Starting in {i} seconds... \n")
     time.sleep(1)
-sd.play(tracking_signal, samplerate=fs1, device=device_index)
+sd.play(output_sig, samplerate=fs1, device=device_index)
 
 for i in range(1, 30 * 60):
     time.sleep(1)
