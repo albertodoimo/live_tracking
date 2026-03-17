@@ -42,7 +42,7 @@ if __name__ == "__main__":
     dur = 10e-3
     hi_freq = 4e3
     low_freq = 100
-    n_sweeps = 500
+    n_sweeps = 1000
 
     t_tone = np.linspace(0, dur, int(fs * dur))
     chirp = signal.chirp(t_tone, hi_freq, t_tone[-1], low_freq)
@@ -69,10 +69,10 @@ if __name__ == "__main__":
             ]
         )
     )
-    print("multich", multich_signal.shape)
-    output_sig = np.float32(np.tile(multich_signal, (500, 1)))
+    print("multich shape", multich_signal.shape)
+    output_sig = np.float32(np.tile(multich_signal, (n_sweeps, 1)))
 
-    sf.write("multich-500_chirp_11-4000_48khz.wav", 0.8 * output_sig, samplerate=fs)
+    sf.write("multich-1000_chirp_100-4000hz_48khz.wav", 0.8 * output_sig, samplerate=fs)
 
     current_frame = 0
 
