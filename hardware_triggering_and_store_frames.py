@@ -77,7 +77,7 @@ time1 = timenow.strftime("%Y-%m-%d_%H-%M-%S")
 
 # Create directory structure
 file_dir = os.path.dirname(os.path.abspath(__file__))
-save_path = "data/"
+save_path = "Data/"
 date_folder_name = str(time)
 hour_folder_name = str(time1)
 folder_path = os.path.join(file_dir, save_path, date_folder_name, hour_folder_name)
@@ -102,7 +102,7 @@ if __name__ == "__main__":
                 ipo = pylon.ImagePersistenceOptions()
                 ipo.SetQuality(image_quality)
 
-                filename = f"{folder_path}/{datetime.datetime.now(datetime.timezone.utc).isoformat()}_{image_quality}.jpeg"
+                filename = f"{folder_path}/{datetime.datetime.now(datetime.timezone.utc).isoformat().replace(':', '-')}.jpeg"
                 img.Save(pylon.ImageFileFormat_Jpeg, filename, ipo)
 
     except KeyboardInterrupt:
