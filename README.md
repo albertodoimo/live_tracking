@@ -11,8 +11,13 @@ This repository contains code and resources for a live tracking of real-time rob
 ## Requirements
 
 ```
-pypylon 4.2.0
-opencv-python 4.10.0.84
+opencv-contrib-python==4.10.0.84
+opencv-python==4.10.0.84
+pypylon==4.2.0
+scipy==1.15.3
+sounddevice==0.4.7
+soundfile==0.12.1
+numpy==1.26.4
 ```
 https://pypi.org/project/pypylon/ 
 
