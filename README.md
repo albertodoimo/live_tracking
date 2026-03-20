@@ -3,7 +3,7 @@
 This repository contains code and resources for a live tracking of real-time robots in the lab using a Basler camera and ArUco markers.
 
 ## **Documentation**
-The documentation for the project is available `here <https://live-tracking.readthedocs.io/en/latest/>`_
+The documentation for the project is available at https://live-tracking.readthedocs.io/en/latest/
 
 ## Files
 

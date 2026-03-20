@@ -19,9 +19,9 @@ sys.path.insert(
 
 html_context = {
     "display_github": True,  # Integrates GitHub
-    # "github_user": "albertodoimo", # Username
+    "github_user": "albertodoimo",  # Username
     "github_repo": "live_tracking",  # Repo name
-    # "github_version": "main", # Version
+    "github_version": "main",  # Version
     "conf_py_path": "/docs/source/",  # Path in the checkout to the docs root
 }
 
@@ -47,6 +47,8 @@ html_theme = "sphinx_rtd_theme"
 
 # -- Options for EPUB output
 epub_show_urls = "footnote"
+
+html_static_path = ["_static"]
 
 html_logo = "_static/live_tracking_logo.png"
 
