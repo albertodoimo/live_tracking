@@ -6,14 +6,17 @@ Created: 2025-12-19
 Author: Alberto Doimo
 email: alberto.doimo@uni-konstanz.de
 
-Description:
+Description
+-----------
 
 Live video tracking using Basler camera and ArUco markers.
 Assumes each robot is marked with two ArUco markers to avoid lost tracking.
 Uses pypylon for camera interfacing and OpenCV for image processing with Aruco markers for robot detection.
 
-Notes:
-    camera model = ace2 R a2A4508-20umBAS
+Notes
+-----
+
+camera model = ace2 R a2A4508-20umBAS
 
 """
 #############################################################################

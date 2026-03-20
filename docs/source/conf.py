@@ -17,6 +17,13 @@ sys.path.insert(
     os.path.abspath("../.."),
 )
 
+html_context = {
+    "display_github": True,  # Integrates GitHub
+    # "github_user": "albertodoimo", # Username
+    "github_repo": "live_tracking",  # Repo name
+    # "github_version": "main", # Version
+    "conf_py_path": "/docs/source/",  # Path in the checkout to the docs root
+}
 
 extensions = [
     "sphinx.ext.duration",
@@ -41,7 +48,7 @@ html_theme = "sphinx_rtd_theme"
 # -- Options for EPUB output
 epub_show_urls = "footnote"
 
-# html_logo = "_static/logo.jpeg"
+html_logo = "_static/live_tracking_logo.png"
 
 # Hides classes and functions from the sidebar menu
 toc_object_entries = False
@@ -53,4 +60,5 @@ autodoc_mock_imports = [
     "serial",  # Fails on RTD (no USB ports)
     "RPi",  # Fails on RTD (not a Raspberry Pi)
     "pypylon",  # Fails on RTD (no Basler camera)
+    "cv2",
 ]

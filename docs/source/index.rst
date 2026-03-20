@@ -6,7 +6,9 @@ Welcome to **live_tracking**'s documentation!
 Overview
 --------
 
-Tracking acoustic objects in a swarm is challenging due to the need for precise time synchronization. **live_tracking** and `SwarmTracking` addresses these challenges by providing tools for processing video and audio data, enabling precise time syncronization of the robots.
+Tracking acoustic objects in a swarm is challenging due to the need for precise time synchronization.
+
+**live_tracking** and **SwarmTracking** addresses these challenges by providing tools for processing video and audio data, enabling precise time syncronization of the robots.
 Hardware integration allows to trigger the camera frames from a soundcard by using a square wave signal at a specific framerate. At the same time a loudspeaker reproduces a sync signal sound that is recorded from all the robots and aligns the audio in the post-processing analysis.
 
 
@@ -39,8 +41,9 @@ Links
 -----
 
 Active Sensing Collectives Lab:
-   - `Github <https://github.com/activesensingcollectives>`_
-   - `Website <https://www.activesensingcollectives.com/>`_
+
+- `Github <https://github.com/activesensingcollectives>`_
+- `Website <https://www.activesensingcollectives.com/>`_
 
 License
 -------
