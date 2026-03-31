@@ -5,9 +5,13 @@ Welcome to **live_tracking**'s documentation!
 
 Overview
 --------
+.. raw:: html
+
+   <video width="100%" loop controls>
+     <source src="_static/2025-10-02_18-45-28_upsampled_2.mp4" type="video/mp4">
+   </video>
 
 Tracking acoustic objects in a swarm is challenging due to the need for precise time synchronization.
-
 **live_tracking** and **SwarmTracking** addresses these challenges by providing tools for processing video and audio data, enabling precise time syncronization of the robots.
 Hardware integration allows to trigger the camera frames from a soundcard by using a square wave signal at a specific framerate. At the same time a loudspeaker reproduces a sync signal sound that is recorded from all the robots and aligns the audio in the post-processing analysis.
 
@@ -33,17 +37,60 @@ Contents
 
    api.rst
 
-Authors
--------
+Documentation Authors
+-----------------------
 - Alberto Doimo (`Github <https://github.com/albertodoimo>`_)
+- Allen Binu 
 
 Links
 -----
+
+Publications using live_tracking:
+
+   `Doimo, A., Hamann, H., Reina, A., & Beleyur, T. (2026). SonoRo: A swarm robotics platform to study acoustically driven collective behaviour (in press). ANTS 2026. <https://www.giovannireina.com/pdf/Doimo-ANTS-2026.pdf>`_
+
+
+   If you use this project or find our paper useful, please cite it using the following format:
+
+   **Plain Text / APA:**
+
+   Doimo, A., Hamann, H., Reina, A., & Beleyur, T. (2026). SonoRo: A swarm robotics platform to study acoustically driven collective behaviour (in press). ANTS 2026.
+
+   **BibTeX:**
+
+   .. code-block:: bibtex
+
+
+      @inCollection{Doimo:ANTS:2026,
+         author = {Doimo, Alberto and Hamann, Heiko and Reina, Andreagiovanni and Beleyur, Thejasvi},
+         title = {Sono{R}o: A Swarm Robotics Platform to Study Acoustically-Driven Collective Behaviour},
+         address = {Cham},
+         doi={},
+         pages = {in press},
+         series = {LNCS},
+         volume = {16515},
+         editor = {{R. Gross et al.}},
+         booktitle = {Swarm Intelligence (ANTS 2026)},
+         publisher = {Springer},
+         year = {2026}
+      }
+
+   .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.17664282.svg
+      :target: https://doi.org/10.5281/zenodo.17664282
+
 
 Active Sensing Collectives Lab:
 
 - `Github <https://github.com/activesensingcollectives>`_
 - `Website <https://www.activesensingcollectives.com/>`_
+
+
+Funding
+-------
+
+- Carl-Zeiss-Stiftung 
+- Deutsche Forschungsgemeinschaft (DFG) under Germany’s Excellence Strategy – EXC 2117-422037984
+- DFG’s Walter Benjamin program - 502056951
 
 License
 -------
