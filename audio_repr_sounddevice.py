@@ -33,13 +33,13 @@ print("Available audio devices:")
 print(sd.query_devices())
 
 # Select your device by index (change this number based on the list above)
-device_index = 20
+device_index = 18
 print("\ndevice_samplerate:", sd.query_devices(device_index)["default_samplerate"])
 
 # Load the stereo wav file for channels 1-2
 tracking_signal, fs1 = sf.read("15_Hz_tracking_sync_signal_48000.wav")
 
-multich_signal, fs2 = sf.read("multich-1000_chirp_100-4000hz_48khz.wav")
+multich_signal, fs2 = sf.read("multich-5_chirp_50-9000hz_48khz.wav")
 
 print(f"tracking_signal shape: {tracking_signal.shape}, fs1: {fs1}")
 print(f"multich_signal shape: {multich_signal.shape}, fs2: {fs2}")
@@ -78,7 +78,7 @@ print("output_sig shape", output_sig.shape)
 
 # Save the combined output signal to a wav file
 output_filename = "combined_output.wav"
-sf.write(output_filename, output_sig, fs1)
+# sf.write(output_filename, output_sig, fs1)
 print(f"Output signal saved to: {output_filename}")
 
 # ---- PLAYBACK WITH CTRL-C INTERRUPT ----

@@ -34,6 +34,9 @@ from utilities_tracking import *
 # Specify the path to your YAML file
 yaml_file = "./camera_calibration/calibration_matrix_basler_2560-1600.yaml"
 
+camera_matrix = None
+dist_coeffs = None
+
 # Load camera calibration data from YAML file
 try:
     with open(yaml_file, "r") as file:
@@ -59,9 +62,11 @@ camera.Open()
 original_width = 4504
 original_height = 4096
 # Crop size
-crop_w = 2560
-crop_h = 1600
+# crop_w = 2560
+# crop_h = 1600
 
+crop_w = 3400 
+crop_h = 3400
 # Define marker pairs and robot names
 marker_pairs = [(8, 9), (6, 7), (10, 11)]
 robot_names = {(8, 9): "241", (6, 7): "240", (10, 11): "238"}
@@ -84,8 +89,16 @@ converter.OutputPixelFormat = pylon.PixelType_BGR8packed
 converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
 
 # Load ArUco dictionary
-aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
+aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
 aruco_params = cv2.aruco.DetectorParameters()
+
+
+def detect_aruco_markers(frame, aruco_dict, aruco_params):
+    """Compatibility wrapper for OpenCV ArUco detection APIs."""
+    if hasattr(cv2.aruco, "ArucoDetector"):
+        detector = cv2.aruco.ArucoDetector(aruco_dict, aruco_params)
+        return detector.detectMarkers(frame)
+    return cv2.aruco.detectMarkers(frame, aruco_dict, parameters=aruco_params)
 
 # Get and print the camera's frame rate
 camera_fps = camera.ResultingFrameRate.GetValue()
@@ -113,6 +126,7 @@ print(f"\nEffective exposure time: {eff_exposure_time}")
 # Calculate arena dimensions
 try:
     pixel_per_meters = 0
+    reference_position = None
     camera.TimestampLatch.Execute()
     while camera.IsGrabbing():
         grab_result = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
@@ -122,7 +136,7 @@ try:
             frame = image.GetArray()
             h, w = frame.shape[:2]
 
-            if "mapx" not in locals():
+            if camera_matrix is not None and dist_coeffs is not None and "mapx" not in locals():
                 new_camera_matrix, roi = cv2.getOptimalNewCameraMatrix(
                     camera_matrix, dist_coeffs, (w, h), 1, (w, h)
                 )
@@ -135,23 +149,28 @@ try:
                     cv2.CV_16SC2,
                 )
 
-            undistorted = cv2.remap(frame, mapx, mapy, interpolation=cv2.INTER_LINEAR)
+            if camera_matrix is not None and dist_coeffs is not None:
+                undistorted = cv2.remap(
+                    frame, mapx, mapy, interpolation=cv2.INTER_LINEAR
+                )
+            else:
+                undistorted = frame
 
-            corners, ids, _ = cv2.aruco.detectMarkers(
-                frame, aruco_dict, parameters=aruco_params
+            corners, ids, _ = detect_aruco_markers(
+                undistorted, aruco_dict, aruco_params
             )
 
             # Draw detected markers
             if ids is not None:
                 corners_array = np.squeeze(np.array(corners))
                 try:
-                    ind1 = np.where(ids == 1)[0]
+                    ind1 = np.where(ids == 12)[0]
                     if len(ind1) == 0:
                         raise ValueError("Marker 0 not found")
-                    ind2 = np.where(ids == 2)[0]
+                    ind2 = np.where(ids == 13)[0]
                     if len(ind2) == 0:
                         raise ValueError("Marker 1 not found")
-                    ind3 = np.where(ids == 3)[0]
+                    ind3 = np.where(ids == 14)[0]
                     if len(ind3) == 0:
                         raise ValueError("Marker 2 not found")
                     # bottom left of 1, top left of 2, top right of 3
@@ -175,6 +194,9 @@ try:
                     print("Pixel per meters: %.2f" % pixel_per_meters)
                 except ValueError:
                     print("Corner Marker 0, 1 or 2 not found")
+                    print('ids found', ids.flatten())
+                    print('ind1', ind1, 'ind2', ind2, 'ind3', ind3)
+                    
             if pixel_per_meters > 0:
                 break
             grab_result.Release()
@@ -185,6 +207,15 @@ except Exception as e:
 if __name__ == "__main__":
 
     try:
+        zoom = {"scale": 1.0, "center": None}
+
+        def zoom_callback(event, x, y, flags, param):
+            if event == cv2.EVENT_MOUSEWHEEL:
+                zoom["scale"] = max(
+                    1.0, min(8.0, zoom["scale"] * (1.2 if flags > 0 else 1 / 1.2))
+                )
+                zoom["center"] = (x, y)
+
         while camera.IsGrabbing():
             # Get the latest image from the camera
             grab_result = camera.RetrieveResult(
@@ -201,73 +232,76 @@ if __name__ == "__main__":
 
                 # Convert the grabbed image to OpenCV format
                 image = converter.Convert(grab_result)
-                frame = image.GetArray()
+                frame = image.GetArray() 
                 original_frame = frame.copy()
                 h, w = frame.shape[:2]
 
-                # Detect Markers
-                corners, ids, _ = cv2.aruco.detectMarkers(
-                    frame, aruco_dict, parameters=aruco_params
-                )
+                # Detect Markersr
+                corners, ids, _ = detect_aruco_markers(frame, aruco_dict, aruco_params)
                 print("\nIDS", np.sort(ids.flatten()) if ids is not None else [])
 
+                if corners:
+                    cv2.aruco.drawDetectedMarkers(frame, corners, ids)
+
                 marker_centers = get_marker_centers(corners, ids)
+                
                 id_list = ids.flatten().tolist() if ids is not None else []
                 centers_dict = {
                     id_: center for id_, center in zip(id_list, marker_centers)
                 }
 
-                # Draw axes on the video to indicate increasing X (right) and Y (down) directions from origin
-                axis_length = 100  # pixels
-                # X axis: right from reference_position
-                x_axis_end = (
-                    int(reference_position[0] + axis_length),
-                    int(reference_position[1]),
-                )
+                if reference_position is not None:
+                    # Draw axes on the video to indicate increasing X (right) and Y (down) directions from origin
+                    axis_length = 100  # pixels
+                    # X axis: right from reference_position
+                    x_axis_end = (
+                        int(reference_position[0] + axis_length),
+                        int(reference_position[1]),
+                    )
 
-                # Y axis: down from reference_position
-                y_axis_end = (
-                    int(reference_position[0]),
-                    int(reference_position[1] + axis_length),
-                )
+                    # Y axis: down from reference_position
+                    y_axis_end = (
+                        int(reference_position[0]),
+                        int(reference_position[1] + axis_length),
+                    )
 
-                # Draw X axis (red)
-                cv2.arrowedLine(
-                    frame,
-                    tuple(reference_position.astype(int)),
-                    x_axis_end,
-                    (0, 0, 255),
-                    4,
-                    tipLength=0.2,
-                )
-                cv2.putText(
-                    frame,
-                    "X",
-                    (x_axis_end[0] + 10, x_axis_end[1]),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (0, 0, 255),
-                    2,
-                )
+                    # Draw X axis (red)
+                    cv2.arrowedLine(
+                        frame,
+                        tuple(reference_position.astype(int)),
+                        x_axis_end,
+                        (0, 0, 255),
+                        4,
+                        tipLength=0.2,
+                    )
+                    cv2.putText(
+                        frame,
+                        "X",
+                        (x_axis_end[0] + 10, x_axis_end[1]),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        1,
+                        (0, 0, 255),
+                        2,
+                    )
 
-                # Draw Y axis (green)
-                cv2.arrowedLine(
-                    frame,
-                    tuple(reference_position.astype(int)),
-                    y_axis_end,
-                    (0, 0, 255),
-                    4,
-                    tipLength=0.2,
-                )
-                cv2.putText(
-                    frame,
-                    "Y",
-                    (y_axis_end[0], y_axis_end[1] + 30),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (0, 0, 255),
-                    2,
-                )
+                    # Draw Y axis (green)
+                    cv2.arrowedLine(
+                        frame,
+                        tuple(reference_position.astype(int)),
+                        y_axis_end,
+                        (0, 0, 255),
+                        4,
+                        tipLength=0.2,
+                    )
+                    cv2.putText(
+                        frame,
+                        "Y",
+                        (y_axis_end[0], y_axis_end[1] + 30),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        1,
+                        (0, 0, 255),
+                        2,
+                    )
 
                 pair_centers = get_pair_centers(
                     marker_pairs,
@@ -277,54 +311,75 @@ if __name__ == "__main__":
                     reference_position,
                     pixel_per_meters,
                 )
-                heading_vectors, pixel_centers, heading_angle = draw_heading_arrows(
-                    frame,
-                    pair_centers,
-                    robot_names,
-                    corners,
-                    ids,
-                    reference_position,
-                    pixel_per_meters,
-                )
-                closest_robot_angle = draw_heading_angles(
-                    frame, heading_vectors, pixel_centers, robot_names
-                )
-                draw_pair_centers(
-                    frame,
-                    pair_centers,
-                    robot_names,
-                    reference_position,
-                    pixel_per_meters,
-                )
-                intradistances = draw_closest_pair_line(
-                    frame,
-                    pair_centers,
-                    robot_names,
-                    reference_position,
-                    pixel_per_meters,
-                )
+                # heading_vectors, pixel_centers, heading_angle = draw_heading_arrows(
+                #     frame,
+                #     pair_centers,
+                #     robot_names,
+                #     corners,
+                #     ids,
+                #     reference_position,
+                #     pixel_per_meters,
+                # )
+                # closest_robot_angle = draw_heading_angles(
+                #     frame, heading_vectors, pixel_centers, robot_names
+                # )
+                # draw_pair_centers(
+                #     frame,
+                #     pair_centers,
+                #     robot_names,
+                #     reference_position,
+                #     pixel_per_meters,
+                # )
+                # intradistances = draw_closest_pair_line(
+                #     frame,
+                #     pair_centers,
+                #     robot_names,
+                #     reference_position,
+                #     pixel_per_meters,
+                # )
 
                 text_size, _ = cv2.getTextSize(
                     timestamp, cv2.FONT_HERSHEY_SIMPLEX, 1, 2
                 )
                 text_x = (frame.shape[1] - text_size[0]) // 2
-                text_y = 40
+                text_y = 100
                 cv2.putText(
                     frame,
                     timestamp,
                     (text_x, text_y),
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    1.3,
-                    (0, 0, 0),
-                    3,
+                    2,
+                    (255, 255, 255),
+                    5,
                     cv2.LINE_AA,
                 )
 
-                cv2.namedWindow("Basler Camera tracking", cv2.WINDOW_NORMAL)
-                # cv2.resizeWindow("Basler Camera tracking", 1600, 1200)
+                cv2.namedWindow(
+                    "Basler Camera tracking",
+                    cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO,
+                )
+                cv2.setMouseCallback("Basler Camera tracking", zoom_callback)
+
+                # Mouse-wheel zoom; keep the selected image region centered.
+                display_frame = frame
+                if zoom["scale"] > 1.0:
+                    frame_height, frame_width = frame.shape[:2]
+                    crop_width = max(1, int(frame_width / zoom["scale"]))
+                    crop_height = max(1, int(frame_height / zoom["scale"]))
+                    center_x, center_y = zoom["center"] or (
+                        frame_width // 2,
+                        frame_height // 2,
+                    )
+                    x1 = max(0, min(frame_width - crop_width, center_x - crop_width // 2))
+                    y1 = max(0, min(frame_height - crop_height, center_y - crop_height // 2))
+                    display_frame = cv2.resize(
+                        frame[y1 : y1 + crop_height, x1 : x1 + crop_width],
+                        (frame_width, frame_height),
+                        interpolation=cv2.INTER_LINEAR,
+                    )
 
                 # Show the camera window
-                cv2.imshow("Basler Camera tracking", frame)
+                cv2.imshow("Basler Camera tracking", display_frame)
 
                 # # Show the original camera feed
                 # cv2.namedWindow("Basler Camera original", cv2.WINDOW_NORMAL)

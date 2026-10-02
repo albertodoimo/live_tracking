@@ -39,40 +39,40 @@ def pow_two(vec):
 if __name__ == "__main__":
 
     fs = 48000
-    dur = 10e-3
-    hi_freq = 4e3
-    low_freq = 100
-    n_sweeps = 1000
+    dur = 2
+    hi_freq = 5e3
+    low_freq = 8e3
+    n_sweeps = 30
 
     t_tone = np.linspace(0, dur, int(fs * dur))
     chirp = signal.chirp(t_tone, hi_freq, t_tone[-1], low_freq)
     sig = pow_two_pad_and_window(chirp, show=True)
 
-    silence_dur = 500  # [ms]
+    silence_dur = 60000  # [ms]
     silence_samples = int(silence_dur * fs / 1000)
     silence_vec = np.zeros((silence_samples,))
     full_sig = pow_two(np.concatenate((sig, silence_vec)))
 
-    # stereo_sig = np.hstack([full_sig.reshape(-1, 1), full_sig.reshape(-1, 1)])
-    # output_sig = np.float32(stereo_sig)
+    stereo_sig = np.hstack([full_sig.reshape(-1, 1), full_sig.reshape(-1, 1)])
+    output_sig = np.float32(stereo_sig)
 
-    # 6 channel version
-    multich_signal = np.float32(
-        np.hstack(
-            [
-                full_sig.reshape(-1, 1),
-                full_sig.reshape(-1, 1),
-                full_sig.reshape(-1, 1),
-                full_sig.reshape(-1, 1),
-                full_sig.reshape(-1, 1),
-                full_sig.reshape(-1, 1),
-            ]
-        )
-    )
-    print("multich shape", multich_signal.shape)
-    output_sig = np.float32(np.tile(multich_signal, (n_sweeps, 1)))
+    # # 6 channel version
+    # multich_signal = np.float32(
+    #     np.hstack(
+    #         [
+    #             full_sig.reshape(-1, 1),
+    #             full_sig.reshape(-1, 1),
+    #             full_sig.reshape(-1, 1),
+    #             full_sig.reshape(-1, 1),
+    #             full_sig.reshape(-1, 1),
+    #             full_sig.reshape(-1, 1),
+    #         ]
+    #     )
+    # )
+    # print("multich shape", multich_signal.shape)
+    # output_sig = np.float32(np.tile(multich_signal, (n_sweeps, 1)))
 
-    sf.write("multich-1000_chirp_100-4000hz_48khz.wav", 0.8 * output_sig, samplerate=fs)
+    sf.write("15_Hz_tracking_sync_signal_48000_test.wav", 0.5 * output_sig, samplerate=fs)
 
     current_frame = 0
 
@@ -90,7 +90,7 @@ if __name__ == "__main__":
     device = get_soundcard_outstream(sd.query_devices())
 
     try:
-        for i in range(n_sweeps):
+        for i in range(1):
             stream = sd.OutputStream(
                 samplerate=fs,
                 blocksize=0,
