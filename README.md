@@ -2,6 +2,9 @@
 
 This repository contains code and resources for a live tracking of real-time robots in the lab using a Basler camera and ArUco markers.
 
+## **Documentation**
+The documentation for the project is available at https://live-tracking.readthedocs.io/en/latest/
+
 ## Files
 
 `hardware_trigger_and_store_frames.py`: Python script to trigger the Basler camera using hardware trigger and store the captured frames at a specific rate. Frames are triggered by `audio_repr_sounddevice.py` from lab PC with a soundcard outputting the trigering signal.
@@ -11,8 +14,13 @@ This repository contains code and resources for a live tracking of real-time rob
 ## Requirements
 
 ```
-pypylon 4.2.0
-opencv-python 4.10.0.84
+opencv-contrib-python==4.10.0.84
+opencv-python==4.10.0.84
+pypylon==4.2.0
+scipy==1.15.3
+sounddevice==0.4.7
+soundfile==0.12.1
+numpy==1.26.4
 ```
 https://pypi.org/project/pypylon/ 
 

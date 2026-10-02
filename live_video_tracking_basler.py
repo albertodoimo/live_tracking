@@ -6,14 +6,17 @@ Created: 2025-12-19
 Author: Alberto Doimo
 email: alberto.doimo@uni-konstanz.de
 
-Description:
+Description
+-----------
 
 Live video tracking using Basler camera and ArUco markers.
 Assumes each robot is marked with two ArUco markers to avoid lost tracking.
 Uses pypylon for camera interfacing and OpenCV for image processing with Aruco markers for robot detection.
 
-Notes:
-    camera model = ace2 R a2A4508-20umBAS
+Notes
+-----
+
+camera model = ace2 R a2A4508-20umBAS
 
 """
 #############################################################################
@@ -27,9 +30,10 @@ import yaml
 import datetime
 from utilities_tracking import *
 
-###############################################################################
-# SETUP PARAMETERS
-###############################################################################
+if __name__ == "__main__":
+    ###############################################################################
+    # SETUP PARAMETERS
+    ###############################################################################
 
 # Specify the path to your YAML file
 yaml_file = "./camera_calibration/calibration_matrix_basler_2560-1600.yaml"
@@ -37,25 +41,25 @@ yaml_file = "./camera_calibration/calibration_matrix_basler_2560-1600.yaml"
 camera_matrix = None
 dist_coeffs = None
 
-# Load camera calibration data from YAML file
-try:
-    with open(yaml_file, "r") as file:
-        data = yaml.safe_load(file)
-        camera_matrix = np.array(data["camera_matrix"])
-        dist_coeffs = np.array(data["dist_coeff"])
-except FileNotFoundError:
-    print(f"Error: The file '{yaml_file}' does not exist.")
-except yaml.YAMLError as exc:
-    print("Error parsing YAML file:", exc)
+    # Load camera calibration data from YAML file
+    try:
+        with open(yaml_file, "r") as file:
+            data = yaml.safe_load(file)
+            camera_matrix = np.array(data["camera_matrix"])
+            dist_coeffs = np.array(data["dist_coeff"])
+    except FileNotFoundError:
+        print(f"Error: The file '{yaml_file}' does not exist.")
+    except yaml.YAMLError as exc:
+        print("Error parsing YAML file:", exc)
 
-# Setup the camera
-# camera model = ace2 R a2A4508-20umBAS
-tl_factory = pylon.TlFactory.GetInstance()
-devices = tl_factory.EnumerateDevices()
-if not devices:
-    print("No Basler camera found.")
-camera = pylon.InstantCamera(tl_factory.CreateDevice(devices[0]))
-camera.Open()
+    # Setup the camera
+    # camera model = ace2 R a2A4508-20umBAS
+    tl_factory = pylon.TlFactory.GetInstance()
+    devices = tl_factory.EnumerateDevices()
+    if not devices:
+        print("No Basler camera found.")
+    camera = pylon.InstantCamera(tl_factory.CreateDevice(devices[0]))
+    camera.Open()
 
 # Set camera parameters
 # Original image size
@@ -71,22 +75,22 @@ crop_h = 3400
 marker_pairs = [(8, 9), (6, 7), (10, 11)]
 robot_names = {(8, 9): "241", (6, 7): "240", (10, 11): "238"}
 
-# Arena dimensions in meters from the marks on the carpet
-print("------------------- Check arena dimensions! ---------------------")
-arena_w = 1.47  # m
-arena_l = 1.91  # m
-camera.Width.SetValue(crop_w)
-camera.Height.SetValue(crop_h)
+    # Arena dimensions in meters from the marks on the carpet
+    print("------------------- Check arena dimensions! ---------------------")
+    arena_w = 1.47  # m
+    arena_l = 1.91  # m
+    camera.Width.SetValue(crop_w)
+    camera.Height.SetValue(crop_h)
 
-# Center crop into the original image
-camera.BslCenterX.Execute()
-camera.BslCenterY.Execute()
-camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
+    # Center crop into the original image
+    camera.BslCenterX.Execute()
+    camera.BslCenterY.Execute()
+    camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
 
-# Convert Basler images to OpenCV format
-converter = pylon.ImageFormatConverter()
-converter.OutputPixelFormat = pylon.PixelType_BGR8packed
-converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
+    # Convert Basler images to OpenCV format
+    converter = pylon.ImageFormatConverter()
+    converter.OutputPixelFormat = pylon.PixelType_BGR8packed
+    converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
 
 # Load ArUco dictionary
 aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
@@ -104,24 +108,24 @@ def detect_aruco_markers(frame, aruco_dict, aruco_params):
 camera_fps = camera.ResultingFrameRate.GetValue()
 print(f"\nHardware Camera FPS output: {camera_fps}")
 
-# Get the current camera temperature
-print(f"\nTemperature: {camera.DeviceTemperature.Value}")
+    # Get the current camera temperature
+    print(f"\nTemperature: {camera.DeviceTemperature.Value}")
 
-# Set the upper limit of the camera's frame rate
-camera.AcquisitionFrameRateEnable.Value = True
-camera.AcquisitionFrameRate.Value = 35
+    # Set the upper limit of the camera's frame rate
+    camera.AcquisitionFrameRateEnable.Value = True
+    camera.AcquisitionFrameRate.Value = 35
 
-# Determine the sensor readout time at the current settings
-readout_time = camera.SensorReadoutTime.Value
-print(f"\nReadout time: {readout_time}")
+    # Determine the sensor readout time at the current settings
+    readout_time = camera.SensorReadoutTime.Value
+    print(f"\nReadout time: {readout_time}")
 
-# Determine the sensor readout time at the current settings
-exposure_time = camera.ExposureTime.Value
-print(f"\nExposure time: {exposure_time}")
+    # Determine the sensor readout time at the current settings
+    exposure_time = camera.ExposureTime.Value
+    print(f"\nExposure time: {exposure_time}")
 
-# Determine the sensor readout time at the current settings
-eff_exposure_time = camera.BslEffectiveExposureTime.Value
-print(f"\nEffective exposure time: {eff_exposure_time}")
+    # Determine the sensor readout time at the current settings
+    eff_exposure_time = camera.BslEffectiveExposureTime.Value
+    print(f"\nEffective exposure time: {eff_exposure_time}")
 
 # Calculate arena dimensions
 try:
@@ -131,10 +135,10 @@ try:
     while camera.IsGrabbing():
         grab_result = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
 
-        if grab_result.GrabSucceeded():
-            image = converter.Convert(grab_result)
-            frame = image.GetArray()
-            h, w = frame.shape[:2]
+            if grab_result.GrabSucceeded():
+                image = converter.Convert(grab_result)
+                frame = image.GetArray()
+                h, w = frame.shape[:2]
 
             if camera_matrix is not None and dist_coeffs is not None and "mapx" not in locals():
                 new_camera_matrix, roi = cv2.getOptimalNewCameraMatrix(
@@ -160,49 +164,49 @@ try:
                 undistorted, aruco_dict, aruco_params
             )
 
-            # Draw detected markers
-            if ids is not None:
-                corners_array = np.squeeze(np.array(corners))
-                try:
-                    ind1 = np.where(ids == 12)[0]
-                    if len(ind1) == 0:
-                        raise ValueError("Marker 0 not found")
-                    ind2 = np.where(ids == 13)[0]
-                    if len(ind2) == 0:
-                        raise ValueError("Marker 1 not found")
-                    ind3 = np.where(ids == 14)[0]
-                    if len(ind3) == 0:
-                        raise ValueError("Marker 2 not found")
-                    # bottom left of 1, top left of 2, top right of 3
-                    corners_1 = corners_array[ind1]
-                    corners_2 = corners_array[ind2]
-                    reference_position = corners_2[:, 2][
-                        0
-                    ]  # Use the bottom right corner of marker 2 as reference
-                    print(
-                        f"Reference: {reference_position}, type: {type(reference_position)}"
-                    )
-                    corners_3 = corners_array[ind3]
-                    pixel_per_meters = np.mean(
-                        [
-                            np.linalg.norm(corners_1[:, 3] - corners_2[:, 0], axis=1)
-                            / arena_w,
-                            np.linalg.norm(corners_2[:, 0] - corners_3[:, 1], axis=1)
-                            / arena_l,
-                        ]
-                    )
-                    print("Pixel per meters: %.2f" % pixel_per_meters)
-                except ValueError:
-                    print("Corner Marker 0, 1 or 2 not found")
-                    print('ids found', ids.flatten())
-                    print('ind1', ind1, 'ind2', ind2, 'ind3', ind3)
-                    
-            if pixel_per_meters > 0:
-                break
-            grab_result.Release()
-except Exception as e:
-    print(f"Error calculating pixel per meters: {e}")
-
+                # Draw detected markers
+                if ids is not None:
+                    corners_array = np.squeeze(np.array(corners))
+                    try:
+                        ind1 = np.where(ids == 1)[0]
+                        if len(ind1) == 0:
+                            raise ValueError("Marker 0 not found")
+                        ind2 = np.where(ids == 2)[0]
+                        if len(ind2) == 0:
+                            raise ValueError("Marker 1 not found")
+                        ind3 = np.where(ids == 3)[0]
+                        if len(ind3) == 0:
+                            raise ValueError("Marker 2 not found")
+                        # bottom left of 1, top left of 2, top right of 3
+                        corners_1 = corners_array[ind1]
+                        corners_2 = corners_array[ind2]
+                        reference_position = corners_2[:, 2][
+                            0
+                        ]  # Use the bottom right corner of marker 2 as reference
+                        print(
+                            f"Reference: {reference_position}, type: {type(reference_position)}"
+                        )
+                        corners_3 = corners_array[ind3]
+                        pixel_per_meters = np.mean(
+                            [
+                                np.linalg.norm(
+                                    corners_1[:, 3] - corners_2[:, 0], axis=1
+                                )
+                                / arena_w,
+                                np.linalg.norm(
+                                    corners_2[:, 0] - corners_3[:, 1], axis=1
+                                )
+                                / arena_l,
+                            ]
+                        )
+                        print("Pixel per meters: %.2f" % pixel_per_meters)
+                    except ValueError:
+                        print("Corner Marker 0, 1 or 2 not found")
+                if pixel_per_meters > 0:
+                    break
+                grab_result.Release()
+    except Exception as e:
+        print(f"Error calculating pixel per meters: {e}")
 
 if __name__ == "__main__":
 
