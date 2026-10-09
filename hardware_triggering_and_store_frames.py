@@ -42,19 +42,19 @@ if __name__ == "__main__":
 
     # Set camera parameters
 
-# Original image size
-original_width = 4504
-original_height = 4096
-# Crop size
-# crop_w = 2560
-# crop_h = 1600
-# crop_w = 2816
-# crop_h = 1760
-crop_w = 3400 
-crop_h = 3400
-# Crop the image to the desired size
-camera.Width.SetValue(crop_w)
-camera.Height.SetValue(crop_h)
+    # Original image size
+    original_width = 4504
+    original_height = 4096
+    # Crop size
+    # crop_w = 2560
+    # crop_h = 1600
+    # crop_w = 2816
+    # crop_h = 1760
+    crop_w = 3400 
+    crop_h = 3400
+    # Crop the image to the desired size
+    camera.Width.SetValue(crop_w)
+    camera.Height.SetValue(crop_h)
 
     # Center crop into the original image
     camera.BslCenterX.Execute()

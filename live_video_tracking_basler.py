@@ -35,11 +35,11 @@ if __name__ == "__main__":
     # SETUP PARAMETERS
     ###############################################################################
 
-# Specify the path to your YAML file
-yaml_file = "./camera_calibration/calibration_matrix_basler_2560-1600.yaml"
+    # Specify the path to your YAML file
+    yaml_file = "./camera_calibration/calibration_matrix_basler_2560-1600.yaml"
 
-camera_matrix = None
-dist_coeffs = None
+    camera_matrix = None
+    dist_coeffs = None
 
     # Load camera calibration data from YAML file
     try:
@@ -61,24 +61,26 @@ dist_coeffs = None
     camera = pylon.InstantCamera(tl_factory.CreateDevice(devices[0]))
     camera.Open()
 
-# Set camera parameters
-# Original image size
-original_width = 4504
-original_height = 4096
-# Crop size
-# crop_w = 2560
-# crop_h = 1600
+    # Set camera parameters
+    # Original image size
+    original_width = 4504
+    original_height = 4096
+    # Crop size
+    # crop_w = 2560
+    # crop_h = 1600
 
-crop_w = 3400 
-crop_h = 3400
-# Define marker pairs and robot names
-marker_pairs = [(8, 9), (6, 7), (10, 11)]
-robot_names = {(8, 9): "241", (6, 7): "240", (10, 11): "238"}
+    crop_w = 3400 
+    crop_h = 3400
+    # Define marker pairs and robot names
+    marker_pairs = [(8, 9), (6, 7), (10, 11)]
+    robot_names = {(8, 9): "241", (6, 7): "240", (10, 11): "238"}
 
     # Arena dimensions in meters from the marks on the carpet
     print("------------------- Check arena dimensions! ---------------------")
     arena_w = 1.47  # m
     arena_l = 1.91  # m
+    arena_w = 3  # m
+    arena_l = 3  # m
     camera.Width.SetValue(crop_w)
     camera.Height.SetValue(crop_h)
 
@@ -92,21 +94,21 @@ robot_names = {(8, 9): "241", (6, 7): "240", (10, 11): "238"}
     converter.OutputPixelFormat = pylon.PixelType_BGR8packed
     converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
 
-# Load ArUco dictionary
-aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
-aruco_params = cv2.aruco.DetectorParameters()
+    # Load ArUco dictionary
+    aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+    aruco_params = cv2.aruco.DetectorParameters()
 
 
-def detect_aruco_markers(frame, aruco_dict, aruco_params):
-    """Compatibility wrapper for OpenCV ArUco detection APIs."""
-    if hasattr(cv2.aruco, "ArucoDetector"):
-        detector = cv2.aruco.ArucoDetector(aruco_dict, aruco_params)
-        return detector.detectMarkers(frame)
-    return cv2.aruco.detectMarkers(frame, aruco_dict, parameters=aruco_params)
+    def detect_aruco_markers(frame, aruco_dict, aruco_params):
+        """Compatibility wrapper for OpenCV ArUco detection APIs."""
+        if hasattr(cv2.aruco, "ArucoDetector"):
+            detector = cv2.aruco.ArucoDetector(aruco_dict, aruco_params)
+            return detector.detectMarkers(frame)
+        return cv2.aruco.detectMarkers(frame, aruco_dict, parameters=aruco_params)
 
-# Get and print the camera's frame rate
-camera_fps = camera.ResultingFrameRate.GetValue()
-print(f"\nHardware Camera FPS output: {camera_fps}")
+    # Get and print the camera's frame rate
+    camera_fps = camera.ResultingFrameRate.GetValue()
+    print(f"\nHardware Camera FPS output: {camera_fps}")
 
     # Get the current camera temperature
     print(f"\nTemperature: {camera.DeviceTemperature.Value}")
@@ -127,13 +129,13 @@ print(f"\nHardware Camera FPS output: {camera_fps}")
     eff_exposure_time = camera.BslEffectiveExposureTime.Value
     print(f"\nEffective exposure time: {eff_exposure_time}")
 
-# Calculate arena dimensions
-try:
-    pixel_per_meters = 0
-    reference_position = None
-    camera.TimestampLatch.Execute()
-    while camera.IsGrabbing():
-        grab_result = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
+    # Calculate arena dimensions
+    try:
+        pixel_per_meters = 0
+        reference_position = None
+        camera.TimestampLatch.Execute()
+        while camera.IsGrabbing():
+            grab_result = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
 
             if grab_result.GrabSucceeded():
                 image = converter.Convert(grab_result)
@@ -153,58 +155,59 @@ try:
                     cv2.CV_16SC2,
                 )
 
-            if camera_matrix is not None and dist_coeffs is not None:
-                undistorted = cv2.remap(
-                    frame, mapx, mapy, interpolation=cv2.INTER_LINEAR
-                )
-            else:
-                undistorted = frame
+            # if camera_matrix is not None and dist_coeffs is not None:
+            #     undistorted = cv2.remap(
+            #         frame, mapx, mapy, interpolation=cv2.INTER_LINEAR
+            #     )
+            # else:
+            #     undistorted = frame
 
             corners, ids, _ = detect_aruco_markers(
-                undistorted, aruco_dict, aruco_params
+                frame, aruco_dict, aruco_params
             )
+            # print("\nIDS", np.sort(ids.flatten()) if ids is not None else [])
 
-                # Draw detected markers
-                if ids is not None:
-                    corners_array = np.squeeze(np.array(corners))
-                    try:
-                        ind1 = np.where(ids == 1)[0]
-                        if len(ind1) == 0:
-                            raise ValueError("Marker 0 not found")
-                        ind2 = np.where(ids == 2)[0]
-                        if len(ind2) == 0:
-                            raise ValueError("Marker 1 not found")
-                        ind3 = np.where(ids == 3)[0]
-                        if len(ind3) == 0:
-                            raise ValueError("Marker 2 not found")
-                        # bottom left of 1, top left of 2, top right of 3
-                        corners_1 = corners_array[ind1]
-                        corners_2 = corners_array[ind2]
-                        reference_position = corners_2[:, 2][
-                            0
-                        ]  # Use the bottom right corner of marker 2 as reference
-                        print(
-                            f"Reference: {reference_position}, type: {type(reference_position)}"
-                        )
-                        corners_3 = corners_array[ind3]
-                        pixel_per_meters = np.mean(
-                            [
-                                np.linalg.norm(
-                                    corners_1[:, 3] - corners_2[:, 0], axis=1
-                                )
-                                / arena_w,
-                                np.linalg.norm(
-                                    corners_2[:, 0] - corners_3[:, 1], axis=1
-                                )
-                                / arena_l,
-                            ]
-                        )
-                        print("Pixel per meters: %.2f" % pixel_per_meters)
-                    except ValueError:
-                        print("Corner Marker 0, 1 or 2 not found")
-                if pixel_per_meters > 0:
-                    break
-                grab_result.Release()
+            # Draw detected markers
+            if ids is not None:
+                corners_array = np.squeeze(np.array(corners))
+                try:
+                    ind1 = np.where(ids == 0)[0]
+                    if len(ind1) == 0:
+                        raise ValueError("Marker 0 not found")
+                    ind2 = np.where(ids == 1)[0]
+                    if len(ind2) == 0:
+                        raise ValueError("Marker 1 not found")
+                    ind3 = np.where(ids == 2)[0]
+                    if len(ind3) == 0:
+                        raise ValueError("Marker 2 not found")
+                    # bottom left of 1, top left of 2, top right of 3
+                    corners_1 = corners_array[ind1]
+                    corners_2 = corners_array[ind2]
+                    reference_position = corners_2[:, 2][
+                        0
+                    ]  # Use the bottom right corner of marker 2 as reference
+                    print(
+                        f"Reference: {reference_position}, type: {type(reference_position)}"
+                    )
+                    corners_3 = corners_array[ind3]
+                    pixel_per_meters = np.mean(
+                        [
+                            np.linalg.norm(
+                                corners_1[:, 3] - corners_2[:, 0], axis=1
+                            )
+                            / arena_w,
+                            np.linalg.norm(
+                                corners_2[:, 0] - corners_3[:, 1], axis=1
+                            )
+                            / arena_l,
+                        ]
+                    )
+                    print("Pixel per meters: %.2f" % pixel_per_meters)
+                except ValueError:
+                    print("Corner Marker 0, 1 or 2 not found")
+            if pixel_per_meters > 0:
+                break
+            grab_result.Release()
     except Exception as e:
         print(f"Error calculating pixel per meters: {e}")
 
@@ -242,7 +245,7 @@ if __name__ == "__main__":
 
                 # Detect Markersr
                 corners, ids, _ = detect_aruco_markers(frame, aruco_dict, aruco_params)
-                print("\nIDS", np.sort(ids.flatten()) if ids is not None else [])
+                # print("\nIDS", np.sort(ids.flatten()) if ids is not None else [])
 
                 if corners:
                     cv2.aruco.drawDetectedMarkers(frame, corners, ids)

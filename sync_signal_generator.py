@@ -18,19 +18,17 @@ import csv
 import os
 import matplotlib.pyplot as plt
 import scipy.signal as signal
-from Utils_SwarmTracking import *
+from Utils_SwarmTracking import generate_sweeps
 
 if __name__ == "__main__":
 
     # Example parameters
     fps = 15  # minimum hardware sampling frequency
-    P_min = 2 * 1 / fps  # Minimum period in sec
-    P_max = 4 * P_min  # Maximum period in sec
+    # P_min = 2 * 1 / fps  # Minimum period in sec
+    # P_max = 4 * P_min  # Maximum period in sec
 
-    os.chdir(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    )
-    output_dir = "./Data/IntermediateData/"
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    output_dir = os.path.join(script_dir, "sync_signal_generator_output")
     os.makedirs(output_dir, exist_ok=True)
 
     # # pseudo-random waiting periods
@@ -76,39 +74,22 @@ if __name__ == "__main__":
     ###################################################################
     # Generate audio file with linear frequency sweeps
 
-    frequencies = (20, 4000)
+    frequencies = (3000, 7000)
     silence_dur = 500  # milliseconds of silence
     sweep_signal, sig1, sig2 = generate_sweeps(
-        frequencies, duration=2, fs=fs, silence_dur=silence_dur
+        frequencies, duration=1, fs=fs, silence_dur=silence_dur
     )
 
-    # Apply low-pass filter to avoid interference with robots DOA
-    sos = signal.butter(8, 2000, "low", fs=fs, output="sos")
-    filtered_sweep = 0.8 * signal.sosfiltfilt(sos, sweep_signal)
-
-    # Check if an .wav file already exists in the directory
-    existing_wav = [f for f in os.listdir(output_dir) if f.lower().endswith(".wav")]
-
-    if existing_wav:
-        print(f"\nExisting .wav file found in {output_dir}: \n{existing_wav[0]}\n")
-        user_input = (
-            input(
-                "A .wav file already exists. Do you want to overwrite it and continue? (y/n): "
-            )
-            .strip()
-            .lower()
-        )
-        if user_input != "y":
-            print("Operation cancelled by user.")
-            exit(0)
-        else:
-            sf.write(output_dir + "filtered_sweep.wav", filtered_sweep, fs)
+    # Apply high-pass filter to avoid interference with robots DOA
+    sos = signal.butter(8, 3000, "highpass", fs=fs, output="sos")
+    filtered_sweep = 0.5 * signal.sosfiltfilt(sos, sweep_signal)
 
     # Repeat the one-minute silence pattern to fill the total duration
     sweep_template = np.concatenate(
         (filtered_sweep, np.zeros((int(fs * interval) - filtered_sweep.shape[0])))
     )
     sync_signal = np.tile(sweep_template, total_duration // interval)
+
 
     ###################################################################
     # generate 15 Hz square wave
@@ -124,23 +105,35 @@ if __name__ == "__main__":
     square_wave = np.concatenate((silence, square_wave))
     sync_signal = np.concatenate((silence, sync_signal))
 
+    # Plot the generated synchronization signal without overloading the plot.
+
+
     # Stack into stereo: L=square wave, R=sync signal
     stereo = np.stack([square_wave, sync_signal], axis=1)
 
-    # Save to WAV file
-    existing_wav = [f for f in os.listdir(output_dir) if f.lower().endswith(".wav")]
+    # # Plot the generated synchronization signal without overloading the plot.
+    # plt.figure(figsize=(12, 4))
+    # plt.plot(stereo)
+    # plt.xlabel("Time (s)")
+    # plt.ylabel("Amplitude")
+    # plt.title("Synchronization signal")
+    # plt.grid(True)
+    # plt.tight_layout()
+    # plt.show()
 
-    if existing_wav:
-        print(f"\nExisting .wav file found in {output_dir}: \n{existing_wav[0]}\n")
-        user_input = (
-            input(
-                "A .wav file already exists. Do you want to overwrite it and continue? (y/n): "
-            )
-            .strip()
-            .lower()
-        )
+    # Save to WAV file
+    output_path = os.path.join(
+        output_dir, f"{freq}Hz_tracking_sync_signal_highfreq.wav"
+    )
+
+    if os.path.exists(output_path):
+        print(f"\nExisting .wav file found: {output_path}\n")
+        user_input = input(
+            "A .wav file already exists. Do you want to overwrite it and continue? (y/n): "
+        ).strip().lower()
         if user_input != "y":
             print("Operation cancelled by user.")
             exit(0)
-        else:
-            sf.write(output_dir + f"{freq}Hz_tracking_sync_signal.wav", stereo, fs)
+
+    sf.write(output_path, stereo, fs)
+    print(f"Output signal saved to: {output_path}")

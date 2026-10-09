@@ -14,7 +14,7 @@ Support functions used into the SwarmTracking processing scripts.
 
 import numpy as np
 from scipy import signal
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import subprocess
 import random
 
@@ -24,9 +24,9 @@ import shutil
 import os
 import csv
 import cv2
-from scipy.interpolate import interp1d
-from functions import *
-from functions.das_v2 import das_filter
+# from scipy.interpolate import interp1d
+# from functions import *
+# from functions.das_v2 import das_filter
 
 
 def save_data_to_csv(matrix, filename, path):
@@ -149,15 +149,15 @@ def window(vec, fs, show=True):
     window = signal.windows.tukey(len(vec), alpha=0.2)
     windowed_vec = vec * window
 
-    if show:
-        dur = len(windowed_vec) / fs
-        t = np.linspace(0, dur, len(windowed_vec))
-        plt.figure()
-        plt.subplot(2, 1, 1)
-        plt.plot(t, windowed_vec)
-        plt.subplot(2, 1, 2)
-        plt.specgram(windowed_vec, NFFT=256, Fs=192e3)
-        plt.show()
+    # if show:
+    #     dur = len(windowed_vec) / fs
+    #     t = np.linspace(0, dur, len(windowed_vec))
+    #     plt.figure()
+    #     plt.subplot(2, 1, 1)
+    #     plt.plot(t, windowed_vec)
+    #     plt.subplot(2, 1, 2)
+    #     plt.specgram(windowed_vec, NFFT=256, Fs=192e3)
+    #     plt.show()
 
     return windowed_vec / max(windowed_vec)
 
